@@ -1,27 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import {
-  LayoutDashboard,
-  FolderKanban,
-  MessageSquare,
-  Boxes,
-  CreditCard,
-  HelpCircle,
-  MessageSquareQuote,
-  Settings,
-  Users,
-  LogOut,
   Globe,
   Sun,
   Moon,
   Menu,
-  X,
+  UserCheck,
+  LogOut,
   ExternalLink,
   ChevronRight,
-  UserCheck
+  Sparkles,
+  ShieldCheck,
+  PanelLeft,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,13 +27,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import AdminSidebar from './AdminSidebar';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  title: string;
+  title?: string;
   titleKm?: string;
   subtitle?: string;
   subtitleKm?: string;
+  hideHeader?: boolean;
+  headerAction?: React.ReactNode;
 }
 
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
@@ -48,70 +46,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   titleKm,
   subtitle,
   subtitleKm,
+  hideHeader = false,
+  headerAction,
 }) => {
   const { user, logout } = useAuth();
   const { language, setLanguage, t, fontClass } = useLanguage();
   const { theme, setTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navItems = [
-    {
-      path: '/',
-      labelKm: 'ផ្ទាំងគ្រប់គ្រង',
-      labelEn: 'Dashboard Overview',
-      icon: LayoutDashboard,
-    },
-    {
-      path: '/portfolio',
-      labelKm: 'គ្រប់គ្រង Portfolio',
-      labelEn: 'Portfolio Projects',
-      icon: FolderKanban,
-    },
-    {
-      path: '/inquiries',
-      labelKm: 'សារទំនាក់ទំនង',
-      labelEn: 'Customer Inquiries',
-      icon: MessageSquare,
-    },
-    {
-      path: '/services',
-      labelKm: 'គ្រប់គ្រងសេវាកម្ម',
-      labelEn: 'Service Catalog',
-      icon: Boxes,
-    },
-    {
-      path: '/pricing',
-      labelKm: 'គ្រប់គ្រងកញ្ចប់តម្លៃ',
-      labelEn: 'Pricing Plans',
-      icon: CreditCard,
-    },
-    {
-      path: '/faqs',
-      labelKm: 'សំណួរញឹកញាប់',
-      labelEn: 'FAQs List',
-      icon: HelpCircle,
-    },
-    {
-      path: '/testimonials',
-      labelKm: 'មតិអតិថិជន',
-      labelEn: 'Client Testimonials',
-      icon: MessageSquareQuote,
-    },
-    {
-      path: '/users',
-      labelKm: 'គ្រប់គ្រងអ្នកប្រើប្រាស់',
-      labelEn: 'Users Management',
-      icon: Users,
-    },
-    {
-      path: '/settings',
-      labelKm: 'ការកំណត់ប្រព័ន្ធ',
-      labelEn: 'System Settings',
-      icon: Settings,
-    },
-  ];
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('kw_sidebar_collapsed') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('kw_sidebar_collapsed', String(collapsed));
+  }, [collapsed]);
 
   const handleLogout = () => {
     logout();
@@ -120,149 +71,154 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   return (
     <div className={`h-screen overflow-hidden bg-background flex text-foreground font-sans ${fontClass}`}>
-      {/* MOBILE OVERLAY */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* FIXED SIDEBAR NAVIGATION */}
-      <aside
-        className={`fixed top-0 bottom-0 left-0 z-50 w-72 h-screen bg-card border-r border-border flex flex-col shrink-0 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:sticky lg:top-0 lg:h-screen`}
-      >
-        {/* BRAND HEADER */}
-        <div className="h-16 px-6 border-b border-border flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary text-primary-foreground font-bold flex items-center justify-center text-lg shadow-md">
-              K
-            </div>
-            <div>
-              <span className="font-bold text-base block leading-tight font-km">Khmerweb Grow Pro</span>
-              <span className="text-[10px] text-muted-foreground block font-medium">Standalone Admin App</span>
-            </div>
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden h-8 w-8"
-            onClick={() => setMobileOpen(false)}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* NAVIGATION LINKS */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="font-km">{t(item.labelKm, item.labelEn)}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* FOOTER SITE LINK */}
-        <div className="p-4 border-t border-border">
-          <a
-            href="http://localhost:5173"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ExternalLink className="h-4 w-4" />
-            <span>{t('មើលគេហទំព័រសាធារណៈ', 'View Main Website')}</span>
-          </a>
-        </div>
-      </aside>
+      {/* REDESIGNED ADMIN SIDEBAR */}
+      <AdminSidebar
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+      />
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        {/* TOPBAR HEADER (Clean Bar without inline title) */}
-        <header className="h-16 border-b border-border px-4 lg:px-8 bg-card/40 backdrop-blur-md shrink-0 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        {/* TOPBAR HEADER */}
+        <header className="h-16 border-b border-border/70 px-4 lg:px-6 bg-card/60 backdrop-blur-xl shrink-0 flex items-center justify-between gap-4 z-10 transition-all">
+          {/* LEFT: MOBILE TOGGLE & BREADCRUMB */}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Open Toggle */}
             <Button
               variant="outline"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden h-9 w-9 rounded-xl border-border/60"
               onClick={() => setMobileOpen(true)}
+              aria-label="បើកម៉ឺនុយ (Open Menu)"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </Button>
+
+            {/* Desktop Collapse Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="hidden lg:flex h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+              onClick={() => setCollapsed((prev) => !prev)}
+              title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+            >
+              <PanelLeft className="h-4 w-4" />
+            </Button>
+
+            {/* BREADCRUMB */}
+            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground font-km">
+              <Link
+                to="/"
+                className="hover:text-foreground font-semibold flex items-center gap-1 transition-colors"
+              >
+                <span>Admin</span>
+              </Link>
+              <ChevronRight className="h-3.5 w-3.5 opacity-40" />
+              <span className="font-bold text-foreground truncate max-w-[200px]">
+                {t(titleKm || title || '', title || '')}
+              </span>
+            </div>
           </div>
 
-          {/* TOPBAR CONTROLS */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* RIGHT: TOPBAR CONTROLS */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
+
+
+
+
+            {/* LANGUAGE SELECTOR */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setLanguage(language === 'km' ? 'en' : 'km')}
-              className="gap-1.5 text-xs font-semibold px-2.5 h-8 border border-border/60"
+              className="gap-1.5 text-xs font-semibold px-2.5 h-8 rounded-lg border border-border/60 hover:bg-accent/80 transition-colors"
             >
               <Globe className="h-3.5 w-3.5 text-primary" />
               <span>{language === 'km' ? 'ខ្មែរ (KM)' : 'English (EN)'}</span>
             </Button>
 
+            {/* THEME TOGGLE */}
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 rounded-lg border border-border/60 hover:bg-accent/80 transition-colors"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              aria-label="Toggle Theme"
             >
               {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-amber-400" />
+                <Sun className="h-4 w-4 text-amber-400 animate-in spin-in-90 duration-300" />
               ) : (
-                <Moon className="h-4 w-4 text-slate-700" />
+                <Moon className="h-4 w-4 text-slate-700 animate-in spin-in-90 duration-300" />
               )}
             </Button>
 
+            <div className="h-5 w-px bg-border/60 hidden sm:block mx-0.5" />
+
+            {/* USER PROFILE DROPDOWN */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 px-2 gap-2 rounded-full hover:bg-accent cursor-pointer">
-                  <Avatar className="h-8 w-8 border-2 border-primary/30 shadow-sm ring-1 ring-primary/20">
-                    <AvatarImage src={user?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'} alt={user?.full_name || 'Admin'} />
+                <Button
+                  variant="ghost"
+                  className="relative h-9 px-2 gap-2 rounded-full hover:bg-accent/80 border border-transparent hover:border-border/60 cursor-pointer transition-all"
+                >
+                  <Avatar className="h-7 w-7 border-2 border-primary/40 shadow-sm ring-1 ring-primary/20">
+                    <AvatarImage
+                      src={
+                        user?.avatar_url ||
+                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'
+                      }
+                      alt={user?.full_name || 'Admin'}
+                    />
                     <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">
                       {user?.full_name?.slice(0, 2).toUpperCase() || 'AD'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="text-left hidden md:block">
-                    <span className="text-xs font-semibold block leading-tight">{user?.full_name || 'Admin'}</span>
-                    <span className="text-[10px] text-muted-foreground capitalize block">{user?.role || 'admin'}</span>
+                    <span className="text-xs font-semibold block leading-tight truncate max-w-[120px]">
+                      {user?.full_name || 'Admin User'}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold block">
+                      {user?.role || 'Administrator'}
+                    </span>
                   </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="font-normal">
+              <DropdownMenuContent align="end" className="w-60 p-1.5 shadow-xl border border-border/80">
+                <DropdownMenuLabel className="font-normal p-2 bg-muted/40 rounded-lg mb-1">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.full_name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-bold leading-none">{user?.full_name || 'Admin'}</p>
+                      <Badge variant="secondary" className="text-[10px] uppercase font-bold py-0 h-4">
+                        {user?.role || 'Admin'}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email || 'admin@khmerweb.com'}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/profile')}>
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-km">{t('ព័ត៌មានគណនី', 'Account Profile')}</span>
+                <DropdownMenuItem
+                  className="gap-2.5 cursor-pointer py-2 rounded-lg font-km text-xs"
+                  onClick={() => navigate('/profile')}
+                >
+                  <UserCheck className="h-4 w-4 text-primary" />
+                  <span>{t('ព័ត៌មានគណនីផ្ទាល់ខ្លួន', 'My Account Profile')}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2.5 cursor-pointer py-2 rounded-lg font-km text-xs"
+                  onClick={() => navigate('/settings')}
+                >
+                  <ShieldCheck className="h-4 w-4 text-indigo-500" />
+                  <span>{t('ការកំណត់ប្រព័ន្ធទូទៅ', 'System Settings')}</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-2 cursor-pointer text-destructive focus:text-destructive" onClick={handleLogout}>
+                <DropdownMenuItem
+                  className="gap-2.5 cursor-pointer py-2 rounded-lg font-km text-xs text-destructive focus:text-destructive focus:bg-destructive/10"
+                  onClick={handleLogout}
+                >
                   <LogOut className="h-4 w-4" />
-                  <span className="font-km">{t('ចាកចេញ (Logout)', 'Logout')}</span>
+                  <span>{t('ចាកចេញពីប្រព័ន្ធ (Logout)', 'Sign Out')}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -270,17 +226,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </header>
 
         {/* MAIN BODY AREA WITH IN-PAGE TITLE & SUBTITLE */}
-        <main className="flex-1 p-4 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 lg:p-7 overflow-y-auto bg-gradient-to-b from-background via-background to-muted/20 ambient-mesh">
           {/* PAGE TITLE & SUBTITLE HEADER IN BODY */}
-          {(title || titleKm) && (
-            <div className="mb-5 pb-3 border-b border-border/50">
-              <h1 className="text-lg sm:text-xl font-bold text-foreground font-km tracking-tight">
-                {t(titleKm || title, title)}
-              </h1>
-              {(subtitle || subtitleKm) && (
-                <p className="text-xs text-muted-foreground mt-1 font-km leading-relaxed">
-                  {t(subtitleKm || subtitle || '', subtitle || '')}
-                </p>
+          {!hideHeader && (title || titleKm) && (
+            <div className="mb-6 pb-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-xl sm:text-2xl font-black text-foreground font-km tracking-tight flex items-center gap-2">
+                  <span>{t(titleKm || title || '', title || '')}</span>
+                </h1>
+                {(subtitle || subtitleKm) && (
+                  <p className="text-xs text-muted-foreground mt-1 font-km leading-relaxed max-w-3xl">
+                    {t(subtitleKm || subtitle || '', subtitle || '')}
+                  </p>
+                )}
+              </div>
+              {headerAction && (
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  {headerAction}
+                </div>
               )}
             </div>
           )}

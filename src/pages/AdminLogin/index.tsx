@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { API_BASE_URL } from '@/lib/api';
 
 export const AdminLogin = () => {
   const { login } = useAuth();
@@ -46,9 +47,9 @@ export const AdminLogin = () => {
 
   // Check NestJS Backend Connectivity on mount
   useEffect(() => {
-    fetch('http://localhost:5000/api')
+    fetch(`${API_BASE_URL}/health`)
       .then((res) => {
-        setApiOnline(res.ok || res.status === 404 || res.status === 200);
+        setApiOnline(res.ok);
       })
       .catch(() => {
         setApiOnline(false);
@@ -95,9 +96,9 @@ export const AdminLogin = () => {
   return (
     <div className={`min-h-screen bg-background flex flex-col justify-between p-4 sm:p-6 relative overflow-hidden select-none ${fontClass}`}>
       {/* Animated Aesthetic Background Orbs */}
-      <div className="absolute top-[-15%] left-[-10%] w-[500px] h-[500px] bg-primary/25 rounded-full blur-[140px] pointer-events-none animate-pulse" />
-      <div className="absolute bottom-[-15%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/25 rounded-full blur-[140px] pointer-events-none animate-pulse" />
-      <div className="absolute top-[40%] right-[30%] w-[300px] h-[300px] bg-emerald-500/15 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-[-15%] left-[-10%] w-[550px] h-[550px] bg-primary/25 rounded-full blur-[150px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[-15%] right-[-10%] w-[550px] h-[550px] bg-indigo-500/25 rounded-full blur-[150px] pointer-events-none animate-pulse" />
+      <div className="absolute top-[40%] right-[30%] w-[350px] h-[350px] bg-emerald-500/15 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Top Header Navigation */}
       <header className="w-full max-w-6xl mx-auto flex items-center justify-between z-10 py-2">
@@ -108,7 +109,7 @@ export const AdminLogin = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-xl text-foreground font-km tracking-tight">Khmerweb Grow Pro</span>
-              <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30">
+              <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30 font-mono">
                 PRO ADMIN
               </Badge>
             </div>
@@ -133,10 +134,10 @@ export const AdminLogin = () => {
             <Server className="h-3.5 w-3.5" />
             <span>
               {apiOnline === true
-                ? 'NestJS API Ready (Port 5000)'
+                ? 'Cloud API Live (Render)'
                 : apiOnline === false
                 ? 'API Disconnected'
-                : 'Checking API...'}
+                : 'Connecting API...'}
             </span>
           </Badge>
 
@@ -169,22 +170,24 @@ export const AdminLogin = () => {
 
       {/* Main Login Card Center */}
       <main className="w-full max-w-md mx-auto my-auto z-10 pt-4 pb-4">
-        <Card className="border-border/80 shadow-2xl backdrop-blur-2xl bg-card/85 rounded-3xl overflow-hidden transition-all duration-300">
+        <div className="glass-card border border-border/70 shadow-2xl rounded-3xl overflow-hidden transition-all duration-300 relative">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-indigo-600 to-emerald-500" />
+
           {/* Header Banner */}
-          <CardHeader className="space-y-2 text-center pb-6 border-b border-border/50 bg-muted/20 relative">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center mb-1 shadow-inner border border-primary/20">
+          <div className="space-y-2 text-center pt-8 pb-6 px-6 border-b border-border/50 bg-muted/20 relative">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary/20 to-indigo-500/20 text-primary mx-auto flex items-center justify-center mb-1 shadow-inner border border-primary/20">
               <ShieldCheck className="h-7 w-7 text-primary" />
             </div>
-            <CardTitle className="text-2xl font-bold font-km tracking-tight text-foreground">
+            <h2 className="text-2xl font-bold font-km tracking-tight text-foreground">
               {t('ចូលប្រព័ន្ធអ្នកគ្រប់គ្រង', 'Admin Portal Login')}
-            </CardTitle>
-            <CardDescription className="font-km text-xs text-muted-foreground max-w-xs mx-auto">
+            </h2>
+            <p className="font-km text-xs text-muted-foreground max-w-xs mx-auto">
               {t('សូមបញ្ចូលអ៊ីមែល និង ពាក្យសម្ងាត់ដើម្បីគ្រប់គ្រងប្រព័ន្ធ', 'Sign in with your administrator credentials')}
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
           <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4 pt-6">
+            <div className="space-y-4 p-6">
               {/* Error Alert Notice */}
               {errorMessage && (
                 <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5 font-km animate-in fade-in slide-in-from-top-2">
@@ -206,7 +209,7 @@ export const AdminLogin = () => {
                     placeholder="admin@khmerweb.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10 h-11 text-xs rounded-xl bg-background/50 border-border/80 focus:ring-2 focus:ring-primary/30 font-mono"
+                    className="pl-10 h-11 text-xs rounded-xl bg-background/60 border-border/80 focus:ring-2 focus:ring-primary/30 font-mono"
                     required
                   />
                 </div>
@@ -234,7 +237,7 @@ export const AdminLogin = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 pr-10 h-11 text-xs rounded-xl bg-background/50 border-border/80 focus:ring-2 focus:ring-primary/30 font-mono"
+                    className="pl-10 pr-10 h-11 text-xs rounded-xl bg-background/60 border-border/80 focus:ring-2 focus:ring-primary/30 font-mono"
                     required
                   />
                   <button
@@ -255,7 +258,7 @@ export const AdminLogin = () => {
                     id="remember"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                   />
                   <Label htmlFor="remember" className="text-xs font-km text-muted-foreground cursor-pointer">
                     {t('ចងចាំគណនីខ្ញុំ (Remember me)', 'Remember me on this device')}
@@ -294,13 +297,13 @@ export const AdminLogin = () => {
                   </Button>
                 </div>
               </div>
-            </CardContent>
+            </div>
 
             {/* Form Footer Action */}
-            <CardFooter className="flex flex-col gap-3 pt-2 pb-6">
+            <div className="p-6 pt-0">
               <Button
                 type="submit"
-                className="w-full h-11 text-xs font-semibold rounded-xl gap-2 font-km bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 shadow-lg shadow-primary/25 transition-all"
+                className="w-full h-11 text-xs font-bold rounded-xl gap-2 font-km bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-primary-foreground shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 disabled={loading}
               >
                 {loading ? (
@@ -315,9 +318,9 @@ export const AdminLogin = () => {
                   </>
                 )}
               </Button>
-            </CardFooter>
+            </div>
           </form>
-        </Card>
+        </div>
       </main>
 
       {/* Footer Info */}
@@ -328,7 +331,7 @@ export const AdminLogin = () => {
           <span>•</span>
           <span className="hover:underline cursor-pointer">Terms of Service</span>
           <span>•</span>
-          <span className="hover:underline cursor-pointer">Support</span>
+          <span className="hover:underline cursor-pointer">API Docs (Swagger)</span>
         </div>
       </footer>
     </div>

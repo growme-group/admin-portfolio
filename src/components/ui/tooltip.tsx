@@ -1,28 +1,87 @@
 import * as React from "react";
-import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-
 import { cn } from "@/lib/utils";
 
-const TooltipProvider = TooltipPrimitive.Provider;
+interface TooltipContextType {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}
 
-const Tooltip = TooltipPrimitive.Root;
+const TooltipContext = React.createContext<TooltipContextType>({
+  open: false,
+  setOpen: () => {},
+});
 
-const TooltipTrigger = TooltipPrimitive.Trigger;
+export const TooltipProvider: React.FC<{ children: React.ReactNode; delayDuration?: number }> = ({
+  children,
+}) => {
+  return <>{children}</>;
+};
 
-const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <TooltipPrimitive.Content
-    ref={ref}
-    sideOffset={sideOffset}
-    className={cn(
-      "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className,
-    )}
-    {...props}
-  />
-));
-TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+export const Tooltip: React.FC<{
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}> = ({ children }) => {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <TooltipContext.Provider value={{ open, setOpen }}>
+      <div
+        className="relative inline-flex items-center"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setOpen(false)}
+      >
+        {children}
+      </div>
+    </TooltipContext.Provider>
+  );
+};
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export const TooltipTrigger = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { asChild?: boolean }
+>(({ className, children, asChild, ...props }, ref) => {
+  return (
+    <div ref={ref} className={cn("inline-flex items-center justify-center", className)} {...props}>
+      {children}
+    </div>
+  );
+});
+TooltipTrigger.displayName = "TooltipTrigger";
+
+export const TooltipContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    side?: "top" | "right" | "bottom" | "left";
+    sideOffset?: number;
+    align?: "start" | "center" | "end";
+  }
+>(({ className, side = "top", align, children, ...props }, ref) => {
+  const { open } = React.useContext(TooltipContext);
+
+  if (!open) return null;
+
+  const positionClasses = {
+    top: "bottom-full left-1/2 -translate-x-1/2 mb-2",
+    bottom: "top-full left-1/2 -translate-x-1/2 mt-2",
+    left: "right-full top-1/2 -translate-y-1/2 mr-2",
+    right: "left-full top-1/2 -translate-y-1/2 ml-2",
+  };
+
+  return (
+    <div
+      ref={ref}
+      role="tooltip"
+      className={cn(
+        "absolute z-50 overflow-hidden rounded-lg border bg-popover px-3 py-1.5 text-xs text-popover-foreground shadow-xl animate-in fade-in-0 zoom-in-95 pointer-events-none whitespace-nowrap",
+        positionClasses[side],
+        className
+      )}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+});
+TooltipContent.displayName = "TooltipContent";

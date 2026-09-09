@@ -118,50 +118,50 @@ const PricingSection = () => {
       
     },
 
-    // website: {
-    //   saas: [
-    //     {
-    //       km: "Website Basic",
-    //       en: "Website Basic",
-    //       monthly: 10,
-    //       yearly: 100,
-    //       features: [{ km: "Hosting", en: "Hosting" }],
-    //     },
-    //     {
-    //       km: "Website Pro",
-    //       en: "Website Pro",
-    //       monthly: 25,
-    //       yearly: 250,
-    //       featured: true,
-    //       features: [{ km: "CMS", en: "CMS System" }],
-    //     },
-    //   ],
+    website: {
+      saas: [
+        {
+          km: "Website Basic",
+          en: "Website Basic",
+          monthly: 10,
+          yearly: 100,
+          features: [{ km: "Hosting", en: "Hosting" }],
+        },
+        {
+          km: "Website Pro",
+          en: "Website Pro",
+          monthly: 25,
+          yearly: 250,
+          featured: true,
+          features: [{ km: "CMS", en: "CMS System" }],
+        },
+      ],
 
-    //   package: [
-    //     {
-    //       km: "Landing Page",
-    //       en: "Landing Page",
-    //       price: "$300",
-    //       features: [{ km: "1 page", en: "1 page website" }],
-    //     },
-    //     {
-    //       km: "Business Website",
-    //       en: "Business Website",
-    //       price: "$800",
-    //       featured: true,
-    //       features: [{ km: "Multi page", en: "Multi-page website" }],
-    //     },
-    //   ],
+      package: [
+        {
+          km: "Landing Page",
+          en: "Landing Page",
+          price: "$300",
+          features: [{ km: "1 page", en: "1 page website" }],
+        },
+        {
+          km: "Business Website",
+          en: "Business Website",
+          price: "$800",
+          featured: true,
+          features: [{ km: "Multi page", en: "Multi-page website" }],
+        },
+      ],
 
-    //   software: [
-    //     {
-    //       km: "Custom Website",
-    //       en: "Custom Website",
-    //       price: "$1000+",
-    //       features: [{ km: "Custom system", en: "Custom system" }],
-    //     },
-    //   ],
-    // },
+      software: [
+        {
+          km: "Custom Website",
+          en: "Custom Website",
+          price: "$1000+",
+          features: [{ km: "Custom system", en: "Custom system" }],
+        },
+      ],
+    },
 
   };
 
@@ -232,7 +232,7 @@ const PricingSection = () => {
             animate={{ opacity: 1 }}
             className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto"
           >
-            {plans.map((p: any, i) => {
+            {plans.map((p: any, i: number) => {
               const price =
                 type === "saas"
                   ? yearly

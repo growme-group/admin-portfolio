@@ -6,17 +6,17 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import AdminProtectedRoute from '@/components/admin/AdminProtectedRoute';
 import { Toaster } from 'sonner';
 
-import AdminLogin from '@/pages/AdminLogin';
-import AdminDashboard from '@/pages/AdminDashboard';
-import AdminPortfolio from '@/pages/AdminPortfolio';
-import AdminInquiries from '@/pages/AdminInquiries';
-import AdminServices from '@/pages/AdminServices';
-import AdminPricing from '@/pages/AdminPricing';
-import AdminFaqs from '@/pages/AdminFaqs';
-import AdminTestimonials from '@/pages/AdminTestimonials';
-import AdminSettings from '@/pages/AdminSettings';
-import AdminProfile from '@/pages/AdminProfile';
-import AdminUsers from '@/pages/AdminUsers';
+import AdminLogin from '@/pages/AdminLogin/index';
+import AdminDashboard from '@/pages/AdminDashboard/index';
+import AdminPortfolio from '@/pages/AdminPortfolio/index';
+import AdminInquiries from '@/pages/AdminInquiries/index';
+import AdminServices from '@/pages/AdminServices/index';
+import AdminPricing from '@/pages/AdminPricing/index';
+import AdminFaqs from '@/pages/AdminFaqs/index';
+import AdminTestimonials from '@/pages/AdminTestimonials/index';
+import AdminSettings from '@/pages/AdminSettings/index';
+import AdminProfile from '@/pages/AdminProfile/index';
+import AdminUsers from '@/pages/AdminUsers/index';
 
 const App = () => {
   return (

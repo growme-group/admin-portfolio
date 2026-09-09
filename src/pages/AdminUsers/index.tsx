@@ -26,6 +26,7 @@ import {
   Eye,
   Sliders,
   Check,
+  RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -164,7 +165,7 @@ export const AdminUsers = () => {
       password: '',
       role: (user.role || 'EDITOR').toUpperCase(),
       avatar_url: user.avatar_url || '',
-      is_active: user.is_active !== undefined ? user.is_active : true,
+      is_active: user.is_active !== false,
     });
     setModalOpen(true);
   };
@@ -177,21 +178,21 @@ export const AdminUsers = () => {
     try {
       const res = await uploadApi.uploadImage(file);
       if (res.success && res.url) {
-        setFormData((prev) => ({ ...prev, avatar_url: res.url! }));
-        toast.success(t('បានអាប់ឡូតរូបថត Avatar ជោគជ័យ!', 'Avatar uploaded successfully!'));
+        setFormData((prev) => ({ ...prev, avatar_url: res.url || '' }));
+        toast.success(t('បានអាប់ឡូតរូប Avatar ជោគជ័យ!', 'Avatar uploaded successfully!'));
       } else {
         const reader = new FileReader();
         reader.onload = (event) => {
           const dataUrl = event.target?.result as string;
           if (dataUrl) {
             setFormData((prev) => ({ ...prev, avatar_url: dataUrl }));
-            toast.success(t('បានអាប់ឡូតរូបថត Avatar ជោគជ័យ!', 'Avatar uploaded successfully!'));
+            toast.success(t('បានអាប់ឡូតរូប Avatar ថ្មី!', 'Avatar preview set!'));
           }
         };
         reader.readAsDataURL(file);
       }
     } catch (err) {
-      toast.error('Avatar upload failed');
+      toast.error('Upload failed');
     } finally {
       setUploadingAvatar(false);
     }
@@ -199,37 +200,33 @@ export const AdminUsers = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.full_name || !formData.email) {
-      toast.error(t('សូមបញ្ចូលឈ្មោះពេញ និង អ៊ីមែល', 'Please enter full name and email'));
-      return;
-    }
-
-    if (!editingId && !formData.password) {
-      toast.error(t('សូមបញ្ចូលពាក្យសម្ងាត់សម្រាប់អ្នកប្រើប្រាស់ថ្មី', 'Password is required for new user'));
-      return;
-    }
-
-    const payload = {
+    const payload: any = {
       full_name: formData.full_name,
       email: formData.email,
-      role: formData.role,
+      role: formData.role.toUpperCase(),
       avatar_url: formData.avatar_url,
       is_active: formData.is_active,
-      ...(formData.password ? { password: formData.password } : {}),
     };
+    if (formData.password) {
+      payload.password = formData.password;
+    }
 
     if (editingId) {
       const res = await usersApi.update(editingId, payload);
       if (res.success) {
-        toast.success(t('កែប្រែព័ត៌មានអ្នកប្រើប្រាស់ និង Assign Role ជោគជ័យ!', 'User and role updated successfully!'));
+        toast.success(t('កែប្រែអ្នកប្រើប្រាស់ជោគជ័យ!', 'User updated successfully!'));
         await loadData();
       } else {
         toast.error(res.message || 'Update failed');
       }
     } else {
+      if (!formData.password) {
+        toast.error(t('សូមបញ្ចូលពាក្យសម្ងាត់', 'Password is required for new user'));
+        return;
+      }
       const res = await usersApi.create(payload);
       if (res.success) {
-        toast.success(t('បន្ថែមអ្នកប្រើប្រាស់ថ្មី និង Assign Role ជោគជ័យ!', 'User created successfully!'));
+        toast.success(t('បន្ថែមអ្នកប្រើប្រាស់ជោគជ័យ!', 'User created successfully!'));
         await loadData();
       } else {
         toast.error(res.message || 'Create failed');
@@ -258,7 +255,7 @@ export const AdminUsers = () => {
   };
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(t(`តើអ្នកប្រាកដជាចង់លុបអ្នកប្រើប្រាស់ "${name}" មែនទេ?`, `Delete user "${name}"?`))) {
+    if (window.confirm(t(`តើអ្នកប្រាកដជាចង់លុបអ្នកប្រើប្រាស់ "${name}" មែនទេ?`, `Delete user "${name}"?`))) {
       const res = await usersApi.delete(id);
       if (res.success) {
         toast.success(t('លុបអ្នកប្រើប្រាស់ជោគជ័យ!', 'User deleted successfully!'));
@@ -317,9 +314,10 @@ export const AdminUsers = () => {
 
   return (
     <AdminLayout
-      title="គ្រប់គ្រងអ្នកប្រើប្រាស់ និង Assign Roles"
-      titleKm="គ្រប់គ្រងអ្នកប្រើប្រាស់ និង Assign Roles"
-      subtitle="គ្រប់គ្រងគណនី បង្កើត Role ថ្មី កំណត់សិទ្ធិ Permissions និង Assign Role ជូន users"
+      title="គ្រប់គ្រងអ្នកប្រើប្រាស់ & Roles"
+      titleKm="គ្រប់គ្រងអ្នកប្រើប្រាស់ & Roles"
+      subtitle="ចាត់ចែងគណនីបុគ្គលិក កំណត់សិទ្ធិ Permissions និង Assign Role ក្នុងប្រព័ន្ធ"
+      subtitleKm="ចាត់ចែងគណនីបុគ្គលិក កំណត់សិទ្ធិ Permissions និង Assign Role ក្នុងប្រព័ន្ធ"
     >
       <div className="space-y-6">
         {/* HIDDEN FILE INPUT */}
@@ -331,30 +329,36 @@ export const AdminUsers = () => {
           onChange={handleAvatarFileUpload}
         />
 
-        {/* TAB BUTTONS (USERS VS ROLES) */}
-        <div className="flex items-center gap-2 border-b border-border pb-3">
+        {/* TAB BUTTONS WITH GLASS-CARD PILLS */}
+        <div className="flex items-center gap-2 border-b border-border/60 pb-3">
           <button
             onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold font-km transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold font-km transition-all ${
               activeTab === 'users'
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                ? 'bg-gradient-to-r from-primary to-indigo-600 text-primary-foreground shadow-md shadow-primary/25 scale-[1.02]'
+                : 'glass-card text-muted-foreground hover:text-foreground border border-border/60'
             }`}
           >
             <UsersIcon className="h-4 w-4" />
-            <span>{t('បញ្ជីអ្នកប្រើប្រាស់ (Users List)', 'Users Management')} ({usersList.length})</span>
+            <span>{t('បញ្ជីអ្នកប្រើប្រាស់ (Users List)', 'Users Management')}</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-white/20">
+              {usersList.length}
+            </span>
           </button>
 
           <button
             onClick={() => setActiveTab('roles')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-semibold font-km transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold font-km transition-all ${
               activeTab === 'roles'
-                ? 'bg-primary text-primary-foreground shadow-md'
-                : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+                ? 'bg-gradient-to-r from-primary to-indigo-600 text-primary-foreground shadow-md shadow-primary/25 scale-[1.02]'
+                : 'glass-card text-muted-foreground hover:text-foreground border border-border/60'
             }`}
           >
             <Shield className="h-4 w-4" />
-            <span>{t('គ្រប់គ្រង Roles & Permissions', 'Roles & Permissions')} ({rolesList.length})</span>
+            <span>{t('គ្រប់គ្រង Roles & Permissions', 'Roles & Permissions')}</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full font-mono bg-white/20">
+              {rolesList.length}
+            </span>
           </button>
         </div>
 
@@ -363,53 +367,78 @@ export const AdminUsers = () => {
           <div className="space-y-6">
             {/* TOP STATS CARDS */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card className="border-border shadow-sm rounded-2xl">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+              <div className="glass-card p-5 rounded-2xl border border-border/70 shadow-sm relative overflow-hidden group hover:border-primary/50 transition-all duration-300 hover:-translate-y-0.5">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-indigo-500" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-muted-foreground font-km block">
+                      {t('អ្នកប្រើប្រាស់សរុប', 'Total System Users')}
+                    </span>
+                    <span className="text-3xl font-black font-mono text-foreground mt-1.5 block tracking-tight">
+                      {usersList.length}
+                    </span>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <UsersIcon className="h-6 w-6" />
                   </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground font-km block">{t('អ្នកប្រើប្រាស់សរុប', 'Total System Users')}</span>
-                    <span className="text-2xl font-bold font-mono text-foreground">{usersList.length}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="mt-3 flex items-center gap-1 text-[11px] text-muted-foreground font-km">
+                  <Sparkles className="h-3 w-3 text-primary" />
+                  <span>{t('គណនីទាំងអស់ក្នុង PostgreSQL users table', 'All accounts in database')}</span>
+                </div>
+              </div>
 
-              <Card className="border-border shadow-sm rounded-2xl">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
+              <div className="glass-card p-5 rounded-2xl border border-border/70 shadow-sm relative overflow-hidden group hover:border-emerald-500/50 transition-all duration-300 hover:-translate-y-0.5">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-muted-foreground font-km block">
+                      {t('គណនីសកម្ម (Active)', 'Active Users')}
+                    </span>
+                    <span className="text-3xl font-black font-mono text-emerald-500 mt-1.5 block tracking-tight">
+                      {activeCount}
+                    </span>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <UserCheck className="h-6 w-6" />
                   </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground font-km block">{t('គណនីសកម្ម (Active)', 'Active Users')}</span>
-                    <span className="text-2xl font-bold font-mono text-emerald-500">{activeCount}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="mt-3 flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-km font-medium">
+                  <span>{t('មានសិទ្ធិចូលប្រើប្រាស់ Admin Portal', 'Can sign in to portal')}</span>
+                </div>
+              </div>
 
-              <Card className="border-border shadow-sm rounded-2xl">
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center font-bold">
+              <div className="glass-card p-5 rounded-2xl border border-border/70 shadow-sm relative overflow-hidden group hover:border-indigo-500/50 transition-all duration-300 hover:-translate-y-0.5">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-cyan-500" />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-muted-foreground font-km block">
+                      {t('គណនី Administrators', 'System Administrators')}
+                    </span>
+                    <span className="text-3xl font-black font-mono text-indigo-500 mt-1.5 block tracking-tight">
+                      {adminCount}
+                    </span>
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <ShieldCheck className="h-6 w-6" />
                   </div>
-                  <div>
-                    <span className="text-xs text-muted-foreground font-km block">{t('គណនី Administrators', 'System Administrators')}</span>
-                    <span className="text-2xl font-bold font-mono text-indigo-500">{adminCount}</span>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="mt-3 flex items-center gap-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-km font-medium">
+                  <span>{t('សិទ្ធិពេញលេញលើគ្រប់ទិន្នន័យ', 'Full system superuser privileges')}</span>
+                </div>
+              </div>
             </div>
 
-            {/* BORDERLESS FILTER BAR */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3 flex-1 min-w-[260px]">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+            {/* FILTER & ACTIONS TOOLBAR */}
+            <div className="glass-card p-3.5 rounded-2xl border border-border/70 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-3 flex-1">
+                <div className="relative flex-1 min-w-[240px] max-w-md">
+                  <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={t('ស្វែងរកតាមឈ្មោះ ឬ អ៊ីមែល...', 'Search user name or email...')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 h-9 font-km text-xs rounded-xl"
+                    className="pl-9 h-9 font-km text-xs rounded-xl bg-background/60 border-border/70 focus:ring-primary/20"
                   />
                 </div>
 
@@ -418,7 +447,7 @@ export const AdminUsers = () => {
                   <select
                     value={roleFilter}
                     onChange={(e) => setRoleFilter(e.target.value)}
-                    className="h-9 px-3 text-xs rounded-xl border border-input bg-background font-km focus:outline-none"
+                    className="h-9 px-3 text-xs rounded-xl border border-border/70 bg-background/80 font-km focus:ring-primary/20 focus:outline-none"
                   >
                     <option value="all">{t('គ្រប់ Roles ទាំងអស់', 'All Roles')}</option>
                     {rolesList.map((r) => (
@@ -430,120 +459,147 @@ export const AdminUsers = () => {
                 </div>
               </div>
 
-              <Button onClick={handleOpenAdd} className="gap-2 font-km text-xs h-9 rounded-xl bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4" />
-                <span>{t('បន្ថែមអ្នកប្រើប្រាស់ថ្មី', 'Add New User')}</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={loadData}
+                  disabled={loading}
+                  className="h-9 w-9 rounded-xl border-border/70 hover:bg-primary/10 hover:text-primary shrink-0"
+                  title={t('ផ្ទុកឡើងវិញ', 'Refresh')}
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-primary' : ''}`} />
+                </Button>
+
+                <Button
+                  onClick={handleOpenAdd}
+                  className="gap-2 font-km text-xs h-9 rounded-xl bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-primary-foreground shadow-md shadow-primary/25 font-bold hover:scale-[1.02] transition-all"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>{t('បន្ថែមអ្នកប្រើប្រាស់ថ្មី', 'Add New User')}</span>
+                </Button>
+              </div>
             </div>
 
-            {/* USERS TABLE CONTAINER */}
-            <Card className="border-border shadow-sm rounded-3xl overflow-hidden">
-              <CardHeader className="border-b border-border/50 py-4 px-6 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-bold font-km">
-                  {t('បញ្ជីអ្នកប្រើប្រាស់ប្រព័ន្ធ', 'System Users List')} ({filteredUsers.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs font-km border-collapse">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
-                        <th className="py-3.5 px-6">{t('អ្នកប្រើប្រាស់', 'User Profile')}</th>
-                        <th className="py-3.5 px-4">{t('Assign Role (សិទ្ធិ)', 'Assign Role')}</th>
-                        <th className="py-3.5 px-4">{t('ស្ថានភាព', 'Status')}</th>
-                        <th className="py-3.5 px-4">{t('ចូលប្រព័ន្ធចុងក្រោយ', 'Last Login')}</th>
-                        <th className="py-3.5 px-6 text-right">{t('សកម្មភាព', 'Actions')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {filteredUsers.map((u) => {
-                        const roleUpper = (u.role || 'EDITOR').toUpperCase();
-                        return (
-                          <tr key={u.id} className="hover:bg-muted/30 transition-colors">
-                            <td className="py-3.5 px-6">
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-9 w-9 border border-primary/20">
-                                  <AvatarImage src={u.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80'} />
-                                  <AvatarFallback className="bg-primary/20 text-primary font-bold text-xs">
-                                    {u.full_name.slice(0, 2).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <span className="font-bold text-foreground block text-xs">{u.full_name}</span>
-                                  <span className="text-[11px] text-muted-foreground font-mono block">{u.email}</span>
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* ASSIGN ROLE DROPDOWN */}
-                            <td className="py-3.5 px-4">
-                              <select
-                                value={roleUpper}
-                                onChange={(e) => handleQuickAssignRole(u.id, e.target.value)}
-                                className="h-8 px-2.5 text-xs font-mono font-semibold rounded-lg border border-primary/30 bg-primary/5 text-primary focus:outline-none cursor-pointer"
-                              >
-                                {rolesList.map((r) => (
-                                  <option key={r.id} value={r.code}>
-                                    {r.code} ({r.name_en})
-                                  </option>
-                                ))}
-                              </select>
-                            </td>
-
-                            <td className="py-3.5 px-4">
-                              <button
-                                type="button"
-                                onClick={() => handleToggleActive(u.id)}
-                                className="cursor-pointer"
-                              >
-                                {u.is_active !== false ? (
-                                  <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px]">
-                                    🟢 Active
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="outline" className="text-muted-foreground text-[10px]">
-                                    🔴 Inactive
-                                  </Badge>
-                                )}
-                              </button>
-                            </td>
-
-                            <td className="py-3.5 px-4 font-mono text-[11px] text-muted-foreground">
-                              {u.last_login_at
-                                ? new Date(u.last_login_at).toLocaleDateString()
-                                : 'N/A'}
-                            </td>
-
-                            <td className="py-3.5 px-6 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleOpenEdit(u)}
-                                  className="h-8 px-2 text-xs gap-1 rounded-lg"
-                                >
-                                  <Edit className="h-3.5 w-3.5 text-primary" />
-                                  <span>{t('កែប្រែ', 'Edit')}</span>
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDelete(u.id, u.full_name)}
-                                  className="h-8 px-2 text-xs gap-1 rounded-lg text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                  <span>{t('លុប', 'Delete')}</span>
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+            {/* USERS TABLE */}
+            <div className="glass-card border border-border/70 rounded-2xl shadow-sm overflow-hidden">
+              <div className="py-4 px-6 border-b border-border/50 flex flex-row items-center justify-between bg-muted/20">
+                <div>
+                  <h3 className="text-sm font-bold font-km text-foreground flex items-center gap-2">
+                    <UsersIcon className="h-4 w-4 text-primary" />
+                    <span>{t('បញ្ជីអ្នកប្រើប្រាស់ប្រព័ន្ធ', 'System Users List')}</span>
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-km mt-0.5">
+                    {t(`មានចំនួនសរុប ${filteredUsers.length} នាក់`, `${filteredUsers.length} total users registered`)}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs font-km border-collapse">
+                  <thead className="bg-muted/40 text-[11px] uppercase font-bold text-muted-foreground border-b border-border/50">
+                    <tr>
+                      <th className="py-3.5 px-6">{t('អ្នកប្រើប្រាស់', 'User Profile')}</th>
+                      <th className="py-3.5 px-4">{t('Assign Role (សិទ្ធិ)', 'Assign Role')}</th>
+                      <th className="py-3.5 px-4">{t('ស្ថានភាព', 'Status')}</th>
+                      <th className="py-3.5 px-4">{t('ចូលប្រព័ន្ធចុងក្រោយ', 'Last Login')}</th>
+                      <th className="py-3.5 px-6 text-right">{t('សកម្មភាព', 'Actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40 font-km">
+                    {filteredUsers.map((u) => {
+                      const roleUpper = (u.role || 'EDITOR').toUpperCase();
+                      return (
+                        <tr key={u.id} className="hover:bg-primary/5 transition-colors group">
+                          <td className="py-4 px-6">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-10 w-10 border border-primary/20 shadow-sm">
+                                <AvatarImage src={u.avatar_url || ''} />
+                                <AvatarFallback className="bg-gradient-to-tr from-primary/20 to-indigo-500/20 text-primary font-bold text-xs font-sans">
+                                  {u.full_name.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <span className="font-bold text-foreground block text-sm group-hover:text-primary transition-colors">
+                                  {u.full_name}
+                                </span>
+                                <span className="text-[11px] text-muted-foreground font-mono block mt-0.5">
+                                  {u.email}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* ASSIGN ROLE DROPDOWN */}
+                          <td className="py-4 px-4">
+                            <select
+                              value={roleUpper}
+                              onChange={(e) => handleQuickAssignRole(u.id, e.target.value)}
+                              className="h-8 px-2.5 text-xs font-mono font-bold rounded-xl border border-primary/30 bg-primary/10 text-primary focus:ring-2 focus:ring-primary/20 focus:outline-none cursor-pointer"
+                            >
+                              {rolesList.map((r) => (
+                                <option key={r.id} value={r.code}>
+                                  {r.code} ({r.name_en})
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+
+                          <td className="py-4 px-4">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleActive(u.id)}
+                              className="cursor-pointer transition-transform active:scale-95"
+                            >
+                              {u.is_active !== false ? (
+                                <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  {t('សកម្ម', 'Active')}
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground text-[10px] gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  {t('ផ្អាក', 'Inactive')}
+                                </Badge>
+                              )}
+                            </button>
+                          </td>
+
+                          <td className="py-4 px-4 font-mono text-xs text-muted-foreground">
+                            {u.last_login_at
+                              ? new Date(u.last_login_at).toLocaleDateString()
+                              : 'Never'}
+                          </td>
+
+                          <td className="py-4 px-6 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleOpenEdit(u)}
+                                className="h-8 px-2.5 text-xs gap-1 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                                <span>{t('កែប្រែ', 'Edit')}</span>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(u.id, u.full_name)}
+                                className="h-8 px-2.5 text-xs gap-1 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                <span>{t('លុប', 'Delete')}</span>
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         )}
 
@@ -552,13 +608,18 @@ export const AdminUsers = () => {
           <div className="space-y-6 font-km">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-foreground">{t('គ្រប់គ្រងប្រព័ន្ធ Roles & Permissions', 'System Roles & Permissions')}</h3>
-                <p className="text-xs text-muted-foreground">{t('កំណត់សិទ្ធិប្រើប្រាស់ និង បង្កើត Role ផ្ទាល់ខ្លួនសម្រាប់អ្នកប្រើប្រាស់', 'Manage permissions and add custom roles')}</p>
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" />
+                  {t('គ្រប់គ្រងប្រព័ន្ធ Roles & Permissions', 'System Roles & Permissions')}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t('កំណត់សិទ្ធិប្រើប្រាស់ និង បង្កើត Role ផ្ទាល់ខ្លួនសម្រាប់អ្នកប្រើប្រាស់', 'Manage permissions and add custom roles')}
+                </p>
               </div>
 
               <Button
                 onClick={() => setRoleModalOpen(true)}
-                className="gap-2 text-xs font-km h-9 rounded-xl bg-primary hover:bg-primary/90"
+                className="gap-2 text-xs font-km h-9 rounded-xl bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-primary-foreground shadow-md shadow-primary/25 font-bold"
               >
                 <Plus className="h-4 w-4" />
                 <span>{t('បង្កើត Role ថ្មី', 'Add Custom Role')}</span>
@@ -567,46 +628,32 @@ export const AdminUsers = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {rolesList.map((role) => (
-                <Card key={role.id} className="border-border shadow-md rounded-3xl relative overflow-hidden flex flex-col">
-                  <CardHeader className="border-b border-border/50 pb-4">
+                <div
+                  key={role.id}
+                  className="glass-card rounded-2xl border border-border/70 shadow-sm relative overflow-hidden flex flex-col hover:border-primary/40 transition-all duration-300"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-indigo-500 to-emerald-500" />
+                  <div className="p-5 border-b border-border/50">
                     <div className="flex items-center justify-between">
-                      <Badge variant={role.code === 'ADMIN' ? 'default' : 'secondary'} className="font-mono text-xs uppercase">
+                      <Badge
+                        variant={role.code === 'ADMIN' ? 'default' : 'secondary'}
+                        className="font-mono text-xs uppercase bg-primary/10 text-primary border-primary/20"
+                      >
                         {role.code}
                       </Badge>
                       {role.is_system && (
-                        <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
-                          <Lock className="h-3 w-3 text-amber-500" />
+                        <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                          <Lock className="h-3 w-3" />
                           System Role
                         </span>
                       )}
                     </div>
-                    <CardTitle className="text-base font-bold pt-2">{role.name_km}</CardTitle>
-                    <CardDescription className="text-xs">{role.description_km}</CardDescription>
-                  </CardHeader>
+                    <h4 className="text-base font-bold text-foreground pt-3">{role.name_km}</h4>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{role.description_km}</p>
+                  </div>
 
-                  <CardContent className="pt-4 flex-1 space-y-3">
-                    <span className="text-[11px] font-bold text-muted-foreground uppercase block">
-                      {t('សិទ្ធិ Permissions ដែលទទួលបាន:', 'Granted Permissions:')}
-                    </span>
-                    <div className="space-y-2">
-                      {AVAILABLE_PERMISSIONS.map((perm) => {
-                        const isGranted = role.permissions.includes(perm.id) || role.code === 'ADMIN';
-                        return (
-                          <div key={perm.id} className="flex items-center justify-between text-xs">
-                            <span className={isGranted ? 'text-foreground font-medium' : 'text-muted-foreground opacity-50'}>
-                              {perm.labelKm}
-                            </span>
-                            {isGranted ? (
-                              <Check className="h-4 w-4 text-emerald-500" />
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground">✕</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
+
+                </div>
               ))}
             </div>
           </div>
@@ -614,10 +661,15 @@ export const AdminUsers = () => {
 
         {/* ADD / EDIT USER MODAL */}
         <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-          <DialogContent className="max-w-3xl font-km rounded-3xl">
-            <DialogHeader>
-              <DialogTitle className="text-base font-bold">
-                {editingId ? t('កែប្រែព័ត៌មានអ្នកប្រើប្រាស់ & Role', 'Edit System User & Assign Role') : t('បន្ថែមអ្នកប្រើប្រាស់ថ្មី & Assign Role', 'Add New System User & Assign Role')}
+          <DialogContent className="max-w-2xl font-km glass-card border border-border/80 shadow-2xl rounded-2xl">
+            <DialogHeader className="border-b border-border/50 pb-3">
+              <DialogTitle className="text-base sm:text-lg font-bold flex items-center gap-2">
+                <UserIcon className="h-5 w-5 text-primary" />
+                <span>
+                  {editingId
+                    ? t('កែប្រែព័ត៌មានអ្នកប្រើប្រាស់ & Role', 'Edit System User & Assign Role')
+                    : t('បន្ថែមអ្នកប្រើប្រាស់ថ្មី & Assign Role', 'Add New System User & Assign Role')}
+                </span>
               </DialogTitle>
             </DialogHeader>
 
@@ -670,13 +722,12 @@ export const AdminUsers = () => {
                   </div>
                 </div>
 
-                {/* SELECT & ASSIGN ROLE */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">{t('Assign Role (សិទ្ធិប្រើប្រាស់)', 'Assign Role')}</Label>
                   <select
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full h-9 px-3 text-xs rounded-xl border border-input bg-background font-mono font-semibold focus:outline-none"
+                    className="w-full h-9 px-3 text-xs rounded-xl border border-input bg-background/80 font-mono font-bold focus:outline-none"
                   >
                     {rolesList.map((r) => (
                       <option key={r.id} value={r.code}>
@@ -713,18 +764,21 @@ export const AdminUsers = () => {
                   id="user_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                  className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                 />
-                <Label htmlFor="user_active" className="text-xs cursor-pointer">
+                <Label htmlFor="user_active" className="text-xs cursor-pointer font-km">
                   {t('កំណត់គណនីជា 🟢 Active Status', 'Set User as Active')}
                 </Label>
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-border">
-                <Button type="button" variant="ghost" onClick={() => setModalOpen(false)} className="text-xs rounded-xl">
+              <div className="pt-4 flex justify-end gap-2 border-t border-border/50">
+                <Button type="button" variant="ghost" onClick={() => setModalOpen(false)} className="text-xs rounded-xl font-km">
                   {t('បោះបង់', 'Cancel')}
                 </Button>
-                <Button type="submit" className="gap-2 font-km text-xs rounded-xl bg-primary hover:bg-primary/90">
+                <Button
+                  type="submit"
+                  className="gap-2 font-km text-xs rounded-xl bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-primary-foreground shadow-md font-bold"
+                >
                   <CheckCircle2 className="h-4 w-4" />
                   <span>{editingId ? t('រក្សាទុកការកែប្រែ', 'Save Changes') : t('បង្កើតគណនីថ្មី', 'Create User')}</span>
                 </Button>
@@ -735,10 +789,11 @@ export const AdminUsers = () => {
 
         {/* ADD CUSTOM ROLE MODAL */}
         <Dialog open={roleModalOpen} onOpenChange={setRoleModalOpen}>
-          <DialogContent className="max-w-2xl font-km rounded-3xl">
-            <DialogHeader>
-              <DialogTitle className="text-base font-bold">
-                {t('បង្កើត Custom Role ថ្មី', 'Create New Custom Role')}
+          <DialogContent className="max-w-2xl font-km glass-card border border-border/80 shadow-2xl rounded-2xl">
+            <DialogHeader className="border-b border-border/50 pb-3">
+              <DialogTitle className="text-base font-bold flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <span>{t('បង្កើត Custom Role ថ្មី', 'Create New Custom Role')}</span>
               </DialogTitle>
             </DialogHeader>
 
@@ -783,7 +838,7 @@ export const AdminUsers = () => {
                   {t('ជ្រើសរើសសិទ្ធិ Permissions សម្រាប់ Role ថ្មីនេះ:', 'Select Granted Permissions:')}
                 </Label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-muted/30 p-3 rounded-2xl border border-border">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-muted/20 p-3 rounded-2xl border border-border/60">
                   {AVAILABLE_PERMISSIONS.map((perm) => {
                     const checked = newRoleForm.permissions.includes(perm.id);
                     return (
@@ -793,14 +848,14 @@ export const AdminUsers = () => {
                         className={`flex items-center gap-2 p-2 rounded-xl border transition-all cursor-pointer ${
                           checked
                             ? 'border-primary bg-primary/10 text-primary font-semibold'
-                            : 'border-border bg-background text-muted-foreground hover:bg-muted'
+                            : 'border-border/60 bg-background/60 text-muted-foreground hover:bg-muted/40'
                         }`}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
                           onChange={() => {}}
-                          className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                         />
                         <span className="text-xs">{perm.labelKm}</span>
                       </div>
@@ -809,11 +864,14 @@ export const AdminUsers = () => {
                 </div>
               </div>
 
-              <div className="pt-4 flex justify-end gap-2 border-t border-border">
-                <Button type="button" variant="ghost" onClick={() => setRoleModalOpen(false)} className="text-xs rounded-xl">
+              <div className="pt-4 flex justify-end gap-2 border-t border-border/50">
+                <Button type="button" variant="ghost" onClick={() => setRoleModalOpen(false)} className="text-xs rounded-xl font-km">
                   {t('បោះបង់', 'Cancel')}
                 </Button>
-                <Button type="submit" className="gap-2 font-km text-xs rounded-xl bg-primary hover:bg-primary/90">
+                <Button
+                  type="submit"
+                  className="gap-2 font-km text-xs rounded-xl bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/90 hover:to-indigo-600/90 text-primary-foreground shadow-md font-bold"
+                >
                   <ShieldCheck className="h-4 w-4" />
                   <span>{t('បង្កើត Role ថ្មី', 'Create Custom Role')}</span>
                 </Button>
